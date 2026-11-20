@@ -11,6 +11,24 @@ $ go install github.com/nikolaydubina/go-binsize-treemap@latest
 $ go tool nm -size <binary finename> | go-binsize-treemap > binsize.svg
 ```
 
+## Diff between two versions
+
+To see which packages grew or shrank between two builds (e.g. after an update),
+pass the old version symbol table with `-diff-from` and pipe the new one to stdin.
+The output is a single SVG: area is the new version size, color is the size change
+(red = grew, blue = shrank, saturated at ±100%; deleted symbols stay visible at a
+small fixed size).
+
+```
+$ go tool nm -size <old binary> > old.symtab
+$ go tool nm -size <new binary> | go-binsize-treemap -diff-from old.symtab > binsize-diff.svg
+```
+
+Symbols are matched by full symbol name (including package); duplicates are summed;
+a symbol that moved to another package shows up as one deletion and one addition.
+A summary of added/deleted/changed symbols and bytes is printed to stderr.
+The layout is deterministic and does not depend on the order of input lines.
+
 ## Disclaimer
 
 Should you be worried about executable binary size?

@@ -38,20 +38,7 @@ func (s BasicSymtabConverter) SymtabFileToTreemap(sf symtab.SymtabFile) treemap.
 			continue
 		}
 
-		symbolName := symtab.ParseSymbolName(entry.SymbolName)
-
-		var parts []string
-
-		// strange symbols. non-go like.
-		// append them to still to single root unknown
-		// TODO: what is this? C/C++?
-		if len(symbolName.PackageParts) == 0 {
-			parts = append(parts, "unknown")
-		} else {
-			parts = append(parts, symbolName.PackageParts...)
-		}
-
-		parts = append(parts, symbolName.SymbolParts...)
+		parts := symbolPathParts(entry.SymbolName)
 
 		if s.MaxDepth > 0 && len(parts) > int(s.MaxDepth) {
 			parts = parts[:s.MaxDepth]
@@ -114,6 +101,23 @@ func (s BasicSymtabConverter) SymtabFileToTreemap(sf symtab.SymtabFile) treemap.
 	}
 
 	return tree
+}
+
+// symbolPathParts splits a full symbol name into treemap path parts:
+// package path parts followed by symbol parts.
+// Symbols without a package (mostly non-Go, e.g. C/C++) go under "unknown".
+func symbolPathParts(symbolName string) []string {
+	parsed := symtab.ParseSymbolName(symbolName)
+
+	var parts []string
+	if len(parsed.PackageParts) == 0 {
+		parts = append(parts, "unknown")
+	} else {
+		parts = append(parts, parsed.PackageParts...)
+	}
+	parts = append(parts, parsed.SymbolParts...)
+
+	return parts
 }
 
 func unique(a []string) []string {
